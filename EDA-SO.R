@@ -110,7 +110,7 @@ datos_fusionados_p <- datos_fusionados %>%
 #Groupby por dia de semana: Domingo, Lunes, Martes, Miércoles, Jueves, Viernes, Sábado
 datos_fusionados_s <- datos_fusionados %>%
   filter(tipoevento == 4) %>% 
-  group_by(tipotransporte, periodo) %>%
+  group_by(tipotransporte, dia) %>%
   summarize(total = sum(montoevento), cantidad_viajes = n()) %>%
   ungroup()
 
@@ -121,6 +121,74 @@ datos_fusionados_n <- datos_fusionados %>%
   summarize(monto = sum(montoevento), cantidad_viajes = n()) %>%
   ungroup()
 
+
+########################################
+#Pre-steps
+library(ggplot2)
+library(RColorBrewer)
+coul <- brewer.pal(5, "Set2") 
+
+### Creacion de graficos #1 ###
+datos_fusionados_p1 <- datos_fusionados_p %>% 
+  select(-cantidad_viajes) %>%
+  group_by(periodo) %>%
+  summarize(total = sum(total) / 1000000) 
+
+# Barplot
+barplot(height=datos_fusionados_p1$total, 
+        names=datos_fusionados_p1$periodo, 
+        xlab="Periodos", 
+        ylab="Total (en millones de Gs)", 
+        main="Total de Ganancia en Millones", 
+        ylim=c(0,7500),
+        col=coul )
+
+### Creacion de graficos #2 ###
+# create a dataset
+datos_fusionados_p2 <- datos_fusionados_p %>% 
+  select(-cantidad_viajes) %>%
+  mutate(total = total / 1000000) %>%
+  mutate(tipotransporte = as.character(tipotransporte))
+
+ggplot(datos_fusionados_p2, 
+       aes(fill=tipotransporte, y=total, x=periodo)) + 
+       geom_bar(position="dodge", stat="identity") + 
+        labs(title = "Total de Ganancia en Millones - Periodo X Tipo de Transporte",
+             x = "Periodo",
+             y = "Total de Ganancia en Millones",
+             fill = "Tipo de Trasporte")
+
+### Creacion de graficos #3 ###
+datos_fusionados_s1 <- datos_fusionados_s %>% 
+  select(-cantidad_viajes) %>%
+  group_by(dia) %>%
+  summarize(total = sum(total) / 1000000) %>%
+  ungroup()
+  
+  # Barplot
+  barplot(height=datos_fusionados_s1$total, 
+          names=datos_fusionados_s1$dia, 
+          xlab="Dias", 
+          ylab="Total (en millones de Gs)", 
+          main="Total de Ganancia en Millones", 
+          ylim=c(0,7500),
+          col=coul )
+
+### Creacion de graficos #4 ###
+# create a dataset
+datos_fusionados_s2 <- datos_fusionados_s %>% 
+  select(-cantidad_viajes) %>%
+  mutate(total = total / 1000000) %>%
+  mutate(tipotransporte = as.character(tipotransporte)) %>%
+  ungroup()
+
+ggplot(datos_fusionados_s2, 
+       aes(fill=tipotransporte, y=total, x=dia)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  labs(title = "Total de Ganancia en Millones - Dia X Tipo de Transporte",
+       x = "Dia de la Semana",
+       y = "Total de Ganancia en Millones",
+       fill = "Tipo de Trasporte")
 
 ########################################
 # Cálculo de coeficiente de correlación:
