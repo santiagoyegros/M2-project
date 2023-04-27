@@ -22,6 +22,10 @@ if (!require('magrittr'))
   install.packages("magrittr")
 library(magrittr)
 
+devtools::install_github("kassambara/ggpubr")
+install.packages("ggpubr")
+library(ggpubr)
+
 
 #################################
 #Prepare the data
@@ -121,60 +125,85 @@ datos_fusionados_n <- datos_fusionados %>%
   summarize(monto = sum(montoevento), cantidad_viajes = n()) %>%
   ungroup()
 
+#Groupby por dia de semana: Domingo, Lunes, Martes, Miércoles, Jueves, Viernes, Sábado; y Periodo del dia
+datos_fusionados_d <- datos_fusionados %>%
+  filter(tipoevento == 4) %>% 
+  group_by(periodo, dia) %>%
+  summarize(total = sum(montoevento), cantidad_viajes = n()) %>%
+  ungroup()
 
-########################################
+
+################################GRAFICOS################################
 #Pre-steps
 library(ggplot2)
 library(RColorBrewer)
-coul <- brewer.pal(5, "Set2") 
+coul <- brewer.pal(7, "Set2")
+coul2 <- brewer.pal(7, "Set3")
 
-### Creacion de graficos #1 ###
+### Creacion de graficos - Grupo 1 - Por total de Ganancia ###
+
+### Creacion de graficos #1.1 ###
+
 datos_fusionados_p1 <- datos_fusionados_p %>% 
   select(-cantidad_viajes) %>%
   group_by(periodo) %>%
   summarize(total = sum(total) / 1000000) 
 
+#Para graficar ordenado
+datos_fusionados_p1$periodo <- factor(datos_fusionados_p1$periodo, levels=c("Madrugada", "Mañana", "Mediamañana", "Siesta", "Tarde", "Noche"))
+datos_fusionados_p1 <- datos_fusionados_p1[order(datos_fusionados_p1$periodo),]
+
 # Barplot
-barplot(height=datos_fusionados_p1$total, 
-        names=datos_fusionados_p1$periodo, 
+par(mfrow = c(1:2))
+g11 <- barplot(height=datos_fusionados_p1$total, 
+        names=datos_fusionados_p1$periodo,
         xlab="Periodos", 
         ylab="Total (en millones de Gs)", 
         main="Total de Ganancia en Millones", 
         ylim=c(0,7500),
         col=coul )
 
-### Creacion de graficos #2 ###
+### Creacion de graficos #1.2 ###
+datos_fusionados_s1 <- datos_fusionados_s %>% 
+  select(-cantidad_viajes) %>%
+  group_by(dia) %>%
+  summarize(total = sum(total) / 1000000) %>%
+  ungroup()
+
+# Para graficar ordenado
+datos_fusionados_s1$dia <- factor(datos_fusionados_s1$dia, levels=c("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"))
+datos_fusionados_s1 <- datos_fusionados_s1[order(datos_fusionados_s1$dia),]
+
+# Barplot
+g12 <- barplot(height=datos_fusionados_s1$total, 
+        names=datos_fusionados_s1$dia, 
+        xlab="Dias", 
+        ylab="Total (en millones de Gs)", 
+        main="Total de Ganancia en Millones", 
+        ylim=c(0,7500),
+        col=coul )
+
+### Creacion de graficos #1.3 ###
 # create a dataset
 datos_fusionados_p2 <- datos_fusionados_p %>% 
   select(-cantidad_viajes) %>%
   mutate(total = total / 1000000) %>%
   mutate(tipotransporte = as.character(tipotransporte))
 
-ggplot(datos_fusionados_p2, 
-       aes(fill=tipotransporte, y=total, x=periodo)) + 
-       geom_bar(position="dodge", stat="identity") + 
-        labs(title = "Total de Ganancia en Millones - Periodo X Tipo de Transporte",
-             x = "Periodo",
-             y = "Total de Ganancia en Millones",
-             fill = "Tipo de Trasporte")
+# Para graficar ordenado
+datos_fusionados_p2$periodo <- factor(datos_fusionados_p2$periodo, levels=c("Madrugada", "Mañana", "Mediamañana", "Siesta", "Tarde", "Noche"))
+datos_fusionados_p2 <- datos_fusionados_p2[order(datos_fusionados_p2$tipotransporte, datos_fusionados_p2$periodo),]
 
-### Creacion de graficos #3 ###
-datos_fusionados_s1 <- datos_fusionados_s %>% 
-  select(-cantidad_viajes) %>%
-  group_by(dia) %>%
-  summarize(total = sum(total) / 1000000) %>%
-  ungroup()
-  
-  # Barplot
-  barplot(height=datos_fusionados_s1$total, 
-          names=datos_fusionados_s1$dia, 
-          xlab="Dias", 
-          ylab="Total (en millones de Gs)", 
-          main="Total de Ganancia en Millones", 
-          ylim=c(0,7500),
-          col=coul )
+# Ggplot
+g13 <- ggplot(datos_fusionados_p2, 
+         aes(fill=tipotransporte, y=total, x=periodo)) + 
+         geom_bar(position="dodge", stat="identity") + 
+         labs(title = "Total de Ganancia en Millones - Periodo X Tipo de Transporte",
+               x = "Periodo",
+               y = "Total de Ganancia en Millones",
+               fill = "Tipo de Trasporte")
 
-### Creacion de graficos #4 ###
+### Creacion de graficos #1.4 ###
 # create a dataset
 datos_fusionados_s2 <- datos_fusionados_s %>% 
   select(-cantidad_viajes) %>%
@@ -182,13 +211,158 @@ datos_fusionados_s2 <- datos_fusionados_s %>%
   mutate(tipotransporte = as.character(tipotransporte)) %>%
   ungroup()
 
-ggplot(datos_fusionados_s2, 
-       aes(fill=tipotransporte, y=total, x=dia)) + 
-  geom_bar(position="dodge", stat="identity") + 
-  labs(title = "Total de Ganancia en Millones - Dia X Tipo de Transporte",
-       x = "Dia de la Semana",
-       y = "Total de Ganancia en Millones",
-       fill = "Tipo de Trasporte")
+# Para graficar ordenado
+datos_fusionados_s2$dia <- factor(datos_fusionados_s2$dia, levels=c("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"))
+datos_fusionados_s2 <- datos_fusionados_s2[order(datos_fusionados_s2$tipotransporte, datos_fusionados_s2$dia),]
+
+# Ggplot
+g14 <- ggplot(datos_fusionados_s2, 
+         aes(fill=tipotransporte, y=total, x=dia)) + 
+         geom_bar(position="dodge", stat="identity") + 
+         labs(title = "Total de Ganancia en Millones - Dia X Tipo de Transporte",
+         x = "Dia de la Semana",
+         y = "Total de Ganancia en Millones",
+         fill = "Tipo de Trasporte")
+
+### Creacion de graficos #1.5 ###
+# Para ordenar
+datos_fusionados_d$dia <- factor(datos_fusionados_d$dia, levels=c("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"))
+datos_fusionados_d$periodo <- factor(datos_fusionados_d$periodo, levels=c("Madrugada", "Mañana", "Mediamañana", "Siesta", "Tarde", "Noche"))
+
+# create a dataset
+datos_fusionados_d1 <- datos_fusionados_d %>% 
+  select(-cantidad_viajes) %>%
+  mutate(total = total / 1000000) %>%
+  arrange(dia, periodo) %>%
+  ungroup()
+
+# Ggplot
+g15 <- ggplot(datos_fusionados_d1, 
+       aes(fill=periodo, y=total, x=dia)) + 
+       geom_bar(position="dodge", stat="identity") + 
+       labs(title = "Total de Ganancia en Millones - Dia de Semana X Periodo del Dia",
+         x = "Dia de la Semana",
+         y = "Total de Ganancia en Millones",
+         fill = "Periodo del Dia")
+
+# Agrupando 3 ggplots
+ggarrange(g13, g14, g15 + rremove("x.text"), 
+          labels = c("A", "B", "C"),
+          ncol = 1, nrow = 3)
+
+### Creacion de graficos - Grupo 2 - Por total de Eventos ###
+### Creacion de graficos #2.1 ###
+
+datos_fusionados_p3 <- datos_fusionados_p %>% 
+  select(-total) %>%
+  group_by(periodo) %>%
+  summarize(cantidad_viajes = sum(cantidad_viajes)) 
+
+#Para graficar ordenado
+datos_fusionados_p3$periodo <- factor(datos_fusionados_p3$periodo, levels=c("Madrugada", "Mañana", "Mediamañana", "Siesta", "Tarde", "Noche"))
+datos_fusionados_p3 <- datos_fusionados_p3[order(datos_fusionados_p3$periodo),]
+
+# Barplot
+par(mfrow = c(1:2))
+g21 <- barplot(height=datos_fusionados_p3$cantidad_viajes, 
+               names=datos_fusionados_p3$periodo,
+               xlab="Periodos del Día", 
+               ylab="Total de Viajes", 
+               main="Total de Viajes por Periodo", 
+               ylim=c(0,2500000),
+               col=coul2 )
+
+### Creacion de graficos #2.2 ###
+datos_fusionados_s3 <- datos_fusionados_s %>% 
+  select(-total) %>%
+  group_by(dia) %>%
+  summarize(cantidad_viajes = sum(cantidad_viajes)) %>%
+  ungroup()
+
+# Para graficar ordenado
+datos_fusionados_s3$dia <- factor(datos_fusionados_s3$dia, levels=c("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"))
+datos_fusionados_s3 <- datos_fusionados_s3[order(datos_fusionados_s3$dia),]
+
+# Barplot
+g22 <- barplot(height=datos_fusionados_s3$cantidad_viajes, 
+               names=datos_fusionados_s3$dia, 
+               xlab="Dias", 
+               ylab="Total de Viajes", 
+               main="Total de Viajes por Día", 
+               ylim=c(0,2500000),
+               srt=45,
+               col=coul2 ) +
+              theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+### Creacion de graficos #2.3 ###
+# create a dataset
+datos_fusionados_p4 <- datos_fusionados_p %>% 
+  select(-total) %>%
+  mutate(tipotransporte = as.character(tipotransporte))
+
+# Para graficar ordenado
+datos_fusionados_p4$periodo <- factor(datos_fusionados_p4$periodo, levels=c("Madrugada", "Mañana", "Mediamañana", "Siesta", "Tarde", "Noche"))
+datos_fusionados_p4 <- datos_fusionados_p4[order(datos_fusionados_p4$tipotransporte, datos_fusionados_p4$periodo),]
+
+# Ggplot
+g23 <- ggplot(datos_fusionados_p4, 
+              aes(fill=tipotransporte, y=cantidad_viajes, x=periodo)) + 
+              scale_fill_brewer(palette = "Pastel2") +
+              geom_bar(position="dodge", stat="identity") + 
+              labs(title = "Total de Viajes - Periodo X Tipo de Transporte",
+                   x = "Periodo",
+                   y = "Total Viajes",
+                   fill = "Tipo de Trasporte") 
+
+### Creacion de graficos #2.4 ###
+# create a dataset
+datos_fusionados_s4 <- datos_fusionados_s %>% 
+  select(-total) %>%
+  mutate(cantidad_viajes = cantidad_viajes / 1000) %>%
+  mutate(tipotransporte = as.character(tipotransporte)) %>%
+  ungroup()
+
+# Para graficar ordenado
+datos_fusionados_s4$dia <- factor(datos_fusionados_s4$dia, levels=c("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"))
+datos_fusionados_s4 <- datos_fusionados_s4[order(datos_fusionados_s4$tipotransporte, datos_fusionados_s4$dia),]
+
+# Ggplot
+g24 <- ggplot(datos_fusionados_s4, 
+              aes(fill=tipotransporte, y=cantidad_viajes, x=dia)) + 
+              scale_fill_brewer(palette = "Pastel2") +
+              geom_bar(position="dodge", stat="identity") + 
+              labs(title = "Total Viajes - Dia X Tipo de Transporte",
+                   x = "Dia de la Semana",
+                   y = "Total de Viajes (en miles)",
+                   fill = "Tipo de Trasporte")
+
+### Creacion de graficos #2.5 ###
+# Para ordenar
+datos_fusionados_d$dia <- factor(datos_fusionados_d$dia, levels=c("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"))
+datos_fusionados_d$periodo <- factor(datos_fusionados_d$periodo, levels=c("Madrugada", "Mañana", "Mediamañana", "Siesta", "Tarde", "Noche"))
+
+# create a dataset
+datos_fusionados_d2 <- datos_fusionados_d %>% 
+  select(-total) %>%
+  mutate(cantidad_viajes = cantidad_viajes / 1000) %>%
+  arrange(dia, periodo) %>%
+  ungroup()
+
+# Ggplot
+g25 <- ggplot(datos_fusionados_d2, 
+              aes(fill=periodo, y=cantidad_viajes, x=dia)) + 
+              geom_bar(position="dodge", stat="identity") + 
+              scale_fill_brewer(palette = "Pastel2") +
+              labs(title = "Total de Viajes - Dia de Semana X Periodo del Dia",
+                   x = "Dia de la Semana",
+                   y = "Total de Viajes",
+                   fill = "Periodo del Dia") +
+              #theme(plot.title = element_text(hjust = 0.5))
+
+# Agrupando 3 ggplots
+ggarrange(g23, g24, g25 + rremove("x.text"), 
+          labels = c("X", "Y", "Z"),
+          ncol = 1, nrow = 3)
 
 ########################################
 # Cálculo de coeficiente de correlación:
