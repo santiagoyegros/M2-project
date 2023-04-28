@@ -137,6 +137,7 @@ datos_fusionados_d <- datos_fusionados %>%
 #Pre-steps
 library(ggplot2)
 library(RColorBrewer)
+library(ggthemes)
 coul <- brewer.pal(7, "Set2")
 coul2 <- brewer.pal(7, "Set3")
 
@@ -363,6 +364,33 @@ g25 <- ggplot(datos_fusionados_d2,
 ggarrange(g23, g24, g25 + rremove("x.text"), 
           labels = c("X", "Y", "Z"),
           ncol = 1, nrow = 3)
+
+
+### Creacion de graficos - Grupo 3 - Pasajeros por Fecha
+transporte_pasajes <- datos_fusionados %>%
+  filter(tipoevento == 4, producto == "MO") %>%
+  group_by(fecha) %>%
+  summarize(total_monto = sum(montoevento)) %>%
+  ungroup()
+
+library(scales)
+  ggplot(transporte_pasajes, aes(x = fecha, y = total_monto)) +
+  geom_line(linetype = 3,
+            lwd = 1.1, color = "#09557f",
+            alpha = 0.6,
+            size = 0.6) + 
+            labs(title = "Total de Eventos por fecha",
+                 x = "Fecha", y = "Monto Total Facturado",
+                 fill = "Monto en Guaranies") +
+            geom_vline(xintercept = as.numeric(as.Date("2023-03-05")), linetype=2, color = "red") +
+            geom_vline(xintercept = as.numeric(as.Date("2023-03-12")), linetype=2, color = "red") +
+            geom_vline(xintercept = as.numeric(as.Date("2023-03-19")), linetype=2, color = "red") +
+            geom_vline(xintercept = as.numeric(as.Date("2023-03-26")), linetype=2, color = "red") +
+            scale_y_continuous(labels = scales::comma) +
+            scale_x_date(date_breaks = "1 day", date_minor_breaks = "1 day",
+                 date_labels = "%b %d") +
+            guides(x = guide_axis(angle = 45)) +
+            theme_gray()
 
 ########################################
 # Cálculo de coeficiente de correlación:
