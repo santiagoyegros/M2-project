@@ -132,6 +132,14 @@ datos_fusionados_d <- datos_fusionados %>%
   summarize(total = sum(montoevento), cantidad_viajes = n()) %>%
   ungroup()
 
+#Groupby por EOT, para ranking de empresas
+datos_fusionados_r <- datos_fusionados %>%
+  filter(tipoevento == 4) %>% 
+  group_by(EOT) %>%
+  summarize(cantidad_viajes = n()) %>%
+  arrange(desc(cantidad_viajes))  %>%
+  ungroup()
+
 
 ################################GRAFICOS################################
 #Pre-steps
@@ -392,6 +400,18 @@ library(scales)
                  date_labels = "%b %d") +
             guides(x = guide_axis(angle = 45)) +
             theme_minimal()
+  
+  
+  par(mar=c(12,6,4,3))
+  barplot(height=datos_fusionados_r$cantidad_viajes, 
+          names=datos_fusionados_r$EOT, 
+          main="Total de Viajes por Empresa", 
+          ylim=c(0,1200000),
+          srt=45,
+          las=2, cex.names=0.7, cex.axis=0.7, 
+          col=coul2 ) + 
+          mtext('Empresas', 1, 10) + mtext('Total de Viajes', 2, 4)
+  
   
 ########################################
 # Cálculo de coeficiente de correlación:
