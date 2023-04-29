@@ -409,7 +409,7 @@ library(scales)
           ylim=c(0,1200000),
           srt=45,
           las=2, cex.names=0.7, cex.axis=0.7, 
-          col=coul2 ) + 
+          col=brewer.pal(30, name="Spectral") ) + 
           mtext('Empresas', 1, 10) + mtext('Total de Viajes', 2, 4)
   
   
