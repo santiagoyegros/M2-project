@@ -146,6 +146,7 @@ datos_fusionados_r <- datos_fusionados %>%
 library(ggplot2)
 library(RColorBrewer)
 library(ggthemes)
+library(scales)
 coul <- brewer.pal(7, "Set2")
 coul2 <- brewer.pal(7, "Set3")
 
@@ -201,6 +202,7 @@ datos_fusionados_p2 <- datos_fusionados_p %>%
 
 # Para graficar ordenado
 datos_fusionados_p2$periodo <- factor(datos_fusionados_p2$periodo, levels=c("Madrugada", "Mañana", "Mediamañana", "Siesta", "Tarde", "Noche"))
+datos_fusionados_p2$tipotransporte <- factor(datos_fusionados_p2$tipotransporte, levels=c("1", "3"), labels = c("Normal", "Diferencial"))
 datos_fusionados_p2 <- datos_fusionados_p2[order(datos_fusionados_p2$tipotransporte, datos_fusionados_p2$periodo),]
 
 # Ggplot
@@ -222,6 +224,7 @@ datos_fusionados_s2 <- datos_fusionados_s %>%
 
 # Para graficar ordenado
 datos_fusionados_s2$dia <- factor(datos_fusionados_s2$dia, levels=c("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"))
+datos_fusionados_s2$tipotransporte <- factor(datos_fusionados_s2$tipotransporte, levels=c("1", "3"), labels = c("Normal", "Diferencial"))
 datos_fusionados_s2 <- datos_fusionados_s2[order(datos_fusionados_s2$tipotransporte, datos_fusionados_s2$dia),]
 
 # Ggplot
@@ -254,10 +257,11 @@ g15 <- ggplot(datos_fusionados_d1,
          y = "Total de Ganancia en Millones",
          fill = "Periodo del Dia")
 
-# Agrupando 3 ggplots
-ggarrange(g13, g14, g15 + rremove("x.text"), 
+# Agrupando 3 ggplots y guardamos
+arrange <- ggarrange(g13, g14, g15 + rremove("x.text"), 
           labels = c("A", "B", "C"),
           ncol = 1, nrow = 3)
+ggsave("output/g13-g14-g15.png", arrange, width = 6, height = 4)
 
 ### Creacion de graficos - Grupo 2 - Por total de Eventos ###
 ### Creacion de graficos #2.1 ###
@@ -311,6 +315,7 @@ datos_fusionados_p4 <- datos_fusionados_p %>%
 
 # Para graficar ordenado
 datos_fusionados_p4$periodo <- factor(datos_fusionados_p4$periodo, levels=c("Madrugada", "Mañana", "Mediamañana", "Siesta", "Tarde", "Noche"))
+datos_fusionados_p4$tipotransporte <- factor(datos_fusionados_p4$tipotransporte, levels=c("1", "3"), labels = c("Normal", "Diferencial"))
 datos_fusionados_p4 <- datos_fusionados_p4[order(datos_fusionados_p4$tipotransporte, datos_fusionados_p4$periodo),]
 
 # Ggplot
@@ -333,6 +338,7 @@ datos_fusionados_s4 <- datos_fusionados_s %>%
 
 # Para graficar ordenado
 datos_fusionados_s4$dia <- factor(datos_fusionados_s4$dia, levels=c("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"))
+datos_fusionados_s4$tipotransporte <- factor(datos_fusionados_s4$tipotransporte, levels=c("1", "3"), labels = c("Normal", "Diferencial"))
 datos_fusionados_s4 <- datos_fusionados_s4[order(datos_fusionados_s4$tipotransporte, datos_fusionados_s4$dia),]
 
 # Ggplot
@@ -365,30 +371,30 @@ g25 <- ggplot(datos_fusionados_d2,
               labs(title = "Total de Viajes - Dia de Semana X Periodo del Dia",
                    x = "Dia de la Semana",
                    y = "Total de Viajes",
-                   fill = "Periodo del Dia") +
-              #theme(plot.title = element_text(hjust = 0.5))
+                   fill = "Periodo del Dia") 
 
 # Agrupando 3 ggplots
-ggarrange(g23, g24, g25 + rremove("x.text"), 
+arrange2 <- ggarrange(g23, g24, g25, 
           labels = c("X", "Y", "Z"),
           ncol = 1, nrow = 3)
+ggsave("output/g23-g24-g25.png", arrange2, width = 6, height = 4)
 
+### Creacion de graficos - Grupo 3 
 
-### Creacion de graficos - Grupo 3 - Pasajeros por Fecha
+### Creacion de graficos #3.1 - Viajes por Fecha###
 transporte_pasajes <- datos_fusionados %>%
   filter(tipoevento == 4, producto == "MO") %>%
   group_by(fecha) %>%
   summarize(total_monto = sum(montoevento)) %>%
   ungroup()
 
-library(scales)
-  ggplot(transporte_pasajes, aes(x = fecha, y = total_monto)) +
-  geom_area(linetype = 3, fill="#69b3a2", alpha=0.4,
+g31 <-  ggplot(transporte_pasajes, aes(x = fecha, y = total_monto)) +
+        geom_area(linetype = 3, fill="#69b3a2", alpha=0.4,
             lwd = 1.1, color = "steelblue",
             alpha = 0.6,
             size = 0.6) + 
             geom_point(size=1) +
-            labs(title = "Total de Eventos por fecha",
+            labs(title = "Total de Viajes por fecha",
                  x = "Fecha", y = "Monto Total Facturado",
                  fill = "Monto en Guaranies") +
             geom_vline(xintercept = as.numeric(as.Date("2023-03-05")), linetype=2, color = "red") +
@@ -400,10 +406,11 @@ library(scales)
                  date_labels = "%b %d") +
             guides(x = guide_axis(angle = 45)) +
             theme_minimal()
+ggsave("output/g31.png", plot = g31)
   
-  
-  par(mar=c(12,6,4,3))
-  barplot(height=datos_fusionados_r$cantidad_viajes, 
+### Creacion de graficos #3.2 - Viajes por Empresas###
+par(mar=c(12,6,4,3))
+g32 <-  barplot(height=datos_fusionados_r$cantidad_viajes, 
           names=datos_fusionados_r$EOT, 
           main="Total de Viajes por Empresa", 
           ylim=c(0,1200000),
