@@ -17,10 +17,12 @@ library(summarytools)
 if (!require('dplyr'))
   install.packages("dplyr")
 library(dplyr)
-
 if (!require('magrittr'))
   install.packages("magrittr")
 library(magrittr)
+if (!require('epitools'))
+  install.packages("epitools")
+library(epitools)
 
 devtools::install_github("kassambara/ggpubr")
 install.packages("ggpubr")
@@ -439,7 +441,186 @@ datos_fusionados_n %>%
   correlate() %>% 
   plot()
 
-#Agregar algun informe automatizado
 
-#Cuarta unidad?
-#Quizás Regresion.R
+########################################
+#Variables categóricas
+#Contraste de hipotesis con variables de resultado categóricas
+
+#Instalamos los paquetes adicionales necesarios
+if (!require('finalfit'))
+  install.packages("finalfit")
+library(finalfit)
+if (!require('rio'))
+  install.packages("rio")
+library(rio)
+if (!require('broom'))
+  install.packages("broom")
+library(broom)
+
+# Los datos continuos se pueden medir,  
+# mientras que los datos categóricos se pueden contar
+
+#Transformación de datos (recodificar)
+transporte <- transporte %>% 
+  mutate(identidad.factor =             # Make new variable  
+           identidad %>%                # from existing variable
+           factor() %>%           # convert to factor
+           fct_recode(            # forcats function
+             "MAS" = "2",      # new on left, old on right
+             "JAHA"   = "3") %>% 
+           ff_label("Identidad"),       # Optional label for finalfit
+         
+         # same thing but more condensed code:
+         tipotransporte.factor = factor(tipotransporte) %>% 
+           fct_recode("Normal" = "1",
+                      "Diferencial"  = "3") %>% 
+           ff_label("Tipo transporte"),
+         
+         periodo.factor = factor(periodo) %>% 
+           ff_label("Periodo"),
+         
+         dia.factor = factor(dia) %>% 
+           ff_label("Dia"),
+         
+         semana.factor = factor(semana) %>% 
+           ff_label("Semana"))
+
+transporte$identidad.factor %>% levels()
+transporte$tipotransporte.factor %>% levels()
+transporte$periodo.factor %>% levels()
+transporte$dia.factor %>% levels()
+transporte$semana.factor %>% levels()
+
+# Visualización de datos ####
+# contamos el número que tomaron diferencial con cada identidad
+p1 <- transporte %>% 
+  ggplot(aes(x = identidad.factor, fill = tipotransporte.factor)) + 
+  geom_bar() + 
+  theme(legend.position = "none")
+
+p2 <- transporte %>% 
+  ggplot(aes(x = identidad.factor, fill = tipotransporte.factor)) + 
+  geom_bar(position = "fill") + 
+  ylab("proportion")
+
+library(patchwork)
+p1 + p2
+
+# Este orden de esta variable en particular es inusual;
+# Una opción rápida es simplemente invertir el orden de los 
+# niveles en la trama.
+p1 <- transporte %>% 
+  ggplot(aes(x = identidad.factor, fill = tipotransporte.factor)) + 
+  geom_bar(position = position_stack(reverse = TRUE)) + 
+  theme(legend.position = "none")
+
+p2 <- transporte %>% 
+  ggplot(aes(x = identidad.factor, fill = tipotransporte.factor)) + 
+  geom_bar(position = position_fill(reverse = TRUE)) + 
+  ylab("proportion")
+
+library(patchwork)
+p1 + p2
+
+###Resumir factores con finalfit ####
+transporte %>% 
+  summary_factorlist(dependent   = "tipotransporte.factor", 
+                     explanatory = "identidad.factor")
+s_factorlist = transporte %>% 
+  summary_factorlist(dependent = "tipotransporte.factor", 
+                     explanatory = 
+                       c("periodo.factor", "dia.factor", "semana.factor")
+  )
+
+as.data.frame(s_factorlist)
+export(as.data.frame(s_factorlist),"s_factorlist.xlsx")
+
+# Chi-cuadrado de Pearson y pruebas exactas de Fisher ####
+
+# Chi-cuadrado de Pearson  ####
+table(transporte$identidad.factor, transporte$tipotransporte.factor) # both give same result
+with(transporte, table(identidad.factor, tipotransporte.factor))
+
+plot(table(transporte$identidad.factor, transporte$tipotransporte.factor))
+
+# La tabla de conteos se puede pasar a prop.table() para proporciones.
+transporte %$%
+  table(identidad.factor, tipotransporte.factor) %>% 
+  prop.table(margin = 1)     # 1: row, 2: column etc.
+
+# se puede pasar la tabla de conteos a chisq.test() 
+# para realizar la prueba de chi-cuadrado.
+transporte %$%        # note $ sign here
+  table(identidad.factor, tipotransporte.factor) %>% 
+  chisq.test()
+
+# Exportar los resultados en el directorio de trabajo (a fichero)
+transporte %$%        # note $ sign here
+  table(identidad.factor, tipotransporte.factor) %>% 
+  chisq.test() %>% 
+  tidy() %>% export(.,"chisq_test.xlsx")
+
+# cuando mayor es el valor de chi cuadrado mayor es la diferencia entre lo 
+# esperado y lo observado (Es una métrica que informa sobre la bondad de ajuste)
+
+# La corrección implica restar 0,5 de la diferencia absoluta
+# entre cada valor observado y esperado. Esto es particularmente útil 
+# cuando los recuentos son bajos, pero puede eliminarse 
+# si lo desea chisq.test(..., correct = FALSE).
+
+# Prueba exacta de Fisher ####
+
+# Una suposición comúnmente declarada de la prueba de chi-cuadrado 
+# es el requisito de tener un recuento esperado de al menos 5 
+# en cada celda de la tabla 2x2. 
+
+# Para tablas más grandes, todos los  recuentos esperados deben ser 
+# y no más del 20 % de todas las celdas deben tener recuentos esperados. 
+# Si no se cumple este supuesto, una prueba alternativa es 
+# la prueba exacta de Fisher.
+transporte %$%        # note $ sign here
+  table(periodo.factor, tipotransporte.factor)
+
+transporte %$%        # note $ sign here
+  table(periodo.factor, tipotransporte.factor) %>% 
+  chisq.test()
+
+# por la prueba exacta de Fisher
+transporte %$%        # note $ sign here
+  table(periodo.factor, tipotransporte.factor) %>% 
+  fisher.test(simulate.p.value = TRUE)
+
+# Chi-cuadrado / Prueba exacta de Fisher usando finalfit ####
+transporte %>% 
+  summary_factorlist(dependent   = "tipotransporte.factor", 
+                     explanatory = "identidad.factor",
+                     p = TRUE)
+
+# más variables:
+transporte %>% 
+  summary_factorlist(dependent = "tipotransporte.factor", 
+                     explanatory = 
+                       c("periodo.factor", "dia.factor", "semana.factor"),
+                     p = TRUE)
+
+# por prueba exacta de Fisher:
+transporte %>% 
+  summary_factorlist(dependent = "tipotransporte.factor", 
+                     explanatory = 
+                       c("periodo.factor", "dia.factor", "semana.factor"),
+                     p = TRUE,
+                     p_cat = "fisher"
+  )
+
+# Múltiples variables por resultado con pruebas de hipótesis: 
+# Incluir otros argumentos 
+transporte %>% 
+  summary_factorlist(dependent = "tipotransporte.factor", 
+                     explanatory = 
+                       c("periodo.factor", "dia.factor", "semana.factor"),
+                     p = TRUE,
+                     p_cat = "fisher",
+                     digits = 
+                       c(1, 1, 4, 2) #1: mean/median, 2: SD/IQR 
+                     # 3: p-value, 4: count percentage
+  )
