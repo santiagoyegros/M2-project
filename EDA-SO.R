@@ -433,18 +433,33 @@ datos_fusionados %>%
   correlate() %>% 
   plot()
 
-correlate(datos_fusionados_p, tipotransporte, periodo, total, cantidad_viajes)
+#Groupby por periodo:
+correlate(datos_fusionados_p, tipotransporte, total, cantidad_viajes)
 datos_fusionados_p %>% 
   correlate() %>% 
   plot()
 
-correlate(datos_fusionados_s, tipotransporte, periodo, total, cantidad_viajes)
+#Groupby por dia de semana
+correlate(datos_fusionados_s, tipotransporte, total, cantidad_viajes)
 datos_fusionados_s %>% 
   correlate() %>% 
   plot()
 
-correlate(datos_fusionados_n, tipotransporte, periodo, total, cantidad_viajes)
+#Groupby número de semana
+correlate(datos_fusionados_n, tipotransporte, semana, monto, cantidad_viajes)
 datos_fusionados_n %>% 
+  correlate() %>% 
+  plot()
+
+#Groupby por dia de semana y Periodo del dia
+correlate(datos_fusionados_d, periodo, dia, total, cantidad_viajes)
+datos_fusionados_d %>% 
+  correlate() %>% 
+  plot()
+
+#Groupby por identidad:
+correlate(datos_fusionados_i, total, cantidad_viajes)
+datos_fusionados_i %>% 
   correlate() %>% 
   plot()
 
