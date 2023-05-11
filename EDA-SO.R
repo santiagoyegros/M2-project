@@ -585,12 +585,22 @@ p1 + p2
 p1 <- transporte %>% 
   ggplot(aes(x = identidad.factor, fill = tipotransporte.factor)) + 
   geom_bar(position = position_stack(reverse = TRUE)) + 
+  scale_fill_brewer(palette = "Set1") + 
+  labs(title = "Total de Viajes",
+       x = "Propietario del Validador",
+       y = "Total de Viajes",
+       fill = "Tipo de Transporte") +
   theme(legend.position = "none")
 
 p2 <- transporte %>% 
   ggplot(aes(x = identidad.factor, fill = tipotransporte.factor)) + 
   geom_bar(position = position_fill(reverse = TRUE)) + 
-  ylab("proportion")
+  scale_fill_brewer(palette = "Set1") + 
+  labs(title = "Proporción",
+       x = "Propietario del Validador",
+       y = "Total de Viajes",
+       fill = "Tipo de Transporte") +
+  ylab("Proporción")
 
 library(patchwork)
 p1 + p2
