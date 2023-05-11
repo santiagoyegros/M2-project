@@ -78,12 +78,15 @@ datos_fusionados <- inner_join(transporte, rutas, by = "idrutaestacion")
 #Análisis de los Datos
 #A disposición tenemos los datos del transporte (transporte), como así también los 
 #fusionados con rutas (datos_fusionados)
+
+
+#Hacemos un sumario del dataset para ver sus caracteristicas
 library(ISLR)
 st_options(lang = "es") #Translations
 summarytools::view(dfSummary(datos_fusionados), 
                    footnote = NA, 
                    valid.col = FALSE, 
-                   file = paste("./","summario_datos_fusionados.html", sep =""))
+                   file = paste("./output/","summario_datos_fusionados.html", sep =""))
 
 #Groupby por producto: CR/ES/MO
 datos_fusionados_p <- datos_fusionados %>%
@@ -165,15 +168,31 @@ datos_fusionados_p1 <- datos_fusionados_p %>%
 datos_fusionados_p1$periodo <- factor(datos_fusionados_p1$periodo, levels=c("Madrugada", "Mañana", "Mediamañana", "Siesta", "Tarde", "Noche"))
 datos_fusionados_p1 <- datos_fusionados_p1[order(datos_fusionados_p1$periodo),]
 
+#GGplot
+ggplot_theme = theme(
+  plot.title = element_text(size = 20),
+  axis.title.x = element_text(size = 16),
+  axis.text.x = element_text(size = 10),
+  axis.title.y = element_text(size = 16))
+
+g11 <-  ggplot(datos_fusionados_p1, aes(x=periodo, y=total, fill=periodo)) + 
+        geom_bar(stat="identity") + 
+        scale_fill_brewer(palette = "Set2") +
+        labs(title = "Total de Ganancia en Millones",
+             x = "Periodos",
+             y = "Total (en millones de Gs)",
+             fill = "Periodo") +
+        theme_grey(base_size = 18)
+
 # Barplot
-par(mfrow = c(1:2))
-g11 <- barplot(height=datos_fusionados_p1$total, 
-        names=datos_fusionados_p1$periodo,
-        xlab="Periodos", 
-        ylab="Total (en millones de Gs)", 
-        main="Total de Ganancia en Millones", 
-        ylim=c(0,7500),
-        col=coul )
+#par(mfrow = c(1:2))
+#g11 <- barplot(height=datos_fusionados_p1$total, 
+#        names=datos_fusionados_p1$periodo,
+#        xlab="Periodos", 
+#        ylab="Total (en millones de Gs)", 
+#        main="Total de Ganancia en Millones", 
+#        ylim=c(0,7500),
+#        col=coul )
 
 ### Creacion de graficos #1.2 ###
 datos_fusionados_s1 <- datos_fusionados_s %>% 
@@ -186,14 +205,21 @@ datos_fusionados_s1 <- datos_fusionados_s %>%
 datos_fusionados_s1$dia <- factor(datos_fusionados_s1$dia, levels=c("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"))
 datos_fusionados_s1 <- datos_fusionados_s1[order(datos_fusionados_s1$dia),]
 
-# Barplot
-g12 <- barplot(height=datos_fusionados_s1$total, 
-        names=datos_fusionados_s1$dia, 
-        xlab="Dias", 
-        ylab="Total (en millones de Gs)", 
-        main="Total de Ganancia en Millones", 
-        ylim=c(0,7500),
-        col=coul )
+#Ggplot
+g12 <-  ggplot(datos_fusionados_s1, aes(x=dia, y=total, fill=dia)) + 
+        geom_bar(stat="identity") + 
+        scale_fill_brewer(palette = "Set2") +
+        labs(title = "Total de Ganancia en Millones",
+             x = "Día",
+             y = "Total (en millones de Gs)",
+             fill = "Día") +
+        theme_grey(base_size = 18)
+
+# Agrupando 2 ggplots y guardamos
+arrange <- ggarrange(g11, g12, 
+                     ncol = 2, nrow = 1)
+ggsave("output/g11-g12.png", arrange, width = 7.8, height = 3.1)
+
 
 ### Creacion de graficos #1.3 ###
 # create a dataset
@@ -214,7 +240,8 @@ g13 <- ggplot(datos_fusionados_p2,
          labs(title = "Total de Ganancia en Millones - Periodo X Tipo de Transporte",
                x = "Periodo",
                y = "Total de Ganancia en Millones",
-               fill = "Tipo de Trasporte")
+               fill = "Tipo de Trasporte") +
+        theme_grey(base_size = 14)
 
 ### Creacion de graficos #1.4 ###
 # create a dataset
@@ -236,7 +263,8 @@ g14 <- ggplot(datos_fusionados_s2,
          labs(title = "Total de Ganancia en Millones - Dia X Tipo de Transporte",
          x = "Dia de la Semana",
          y = "Total de Ganancia en Millones",
-         fill = "Tipo de Trasporte")
+         fill = "Tipo de Trasporte") +
+         theme_grey(base_size = 14)
 
 ### Creacion de graficos #1.5 ###
 # Para ordenar
@@ -257,10 +285,11 @@ g15 <- ggplot(datos_fusionados_d1,
        labs(title = "Total de Ganancia en Millones - Dia de Semana X Periodo del Dia",
          x = "Dia de la Semana",
          y = "Total de Ganancia en Millones",
-         fill = "Periodo del Dia")
+         fill = "Periodo del Dia") +
+       theme_grey(base_size = 14)
 
 # Agrupando 3 ggplots y guardamos
-arrange <- ggarrange(g13, g14, g15 + rremove("x.text"), 
+arrange <- ggarrange(g13, g14, g15, 
           labels = c("A", "B", "C"),
           ncol = 1, nrow = 3)
 ggsave("output/g13-g14-g15.png", arrange, width = 6, height = 4)
@@ -277,15 +306,15 @@ datos_fusionados_p3 <- datos_fusionados_p %>%
 datos_fusionados_p3$periodo <- factor(datos_fusionados_p3$periodo, levels=c("Madrugada", "Mañana", "Mediamañana", "Siesta", "Tarde", "Noche"))
 datos_fusionados_p3 <- datos_fusionados_p3[order(datos_fusionados_p3$periodo),]
 
-# Barplot
-par(mfrow = c(1:2))
-g21 <- barplot(height=datos_fusionados_p3$cantidad_viajes, 
-               names=datos_fusionados_p3$periodo,
-               xlab="Periodos del Día", 
-               ylab="Total de Viajes", 
-               main="Total de Viajes por Periodo", 
-               ylim=c(0,2500000),
-               col=coul2 )
+# Ggplot
+g21 <-  ggplot(datos_fusionados_p3, aes(x=periodo, y=cantidad_viajes, fill=periodo)) + 
+        geom_bar(stat="identity") + 
+        scale_fill_brewer(palette = "Set2") +
+        labs(title = "Total de Viajes por Periodo",
+            x = "Periodos",
+            y = "Total de Viajes",
+            fill = "Periodo") +
+        theme_grey(base_size = 17)
 
 ### Creacion de graficos #2.2 ###
 datos_fusionados_s3 <- datos_fusionados_s %>% 
@@ -298,16 +327,21 @@ datos_fusionados_s3 <- datos_fusionados_s %>%
 datos_fusionados_s3$dia <- factor(datos_fusionados_s3$dia, levels=c("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"))
 datos_fusionados_s3 <- datos_fusionados_s3[order(datos_fusionados_s3$dia),]
 
-# Barplot
-g22 <- barplot(height=datos_fusionados_s3$cantidad_viajes, 
-               names=datos_fusionados_s3$dia, 
-               xlab="Dias", 
-               ylab="Total de Viajes", 
-               main="Total de Viajes por Día", 
-               ylim=c(0,2500000),
-               srt=45,
-               col=coul2 ) +
-              theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+# Ggplot
+g22 <-  ggplot(datos_fusionados_s3, aes(x=dia, y=cantidad_viajes, fill=dia)) + 
+        geom_bar(stat="identity") + 
+        scale_fill_brewer(palette = "Set2") +
+        labs(title = "Total de Viajes por Día",
+             x = "Día",
+             y = "Total de Viajes",
+             fill = "Día") +
+        theme_grey(base_size = 17)
+
+# Agrupando 2 ggplots y guardamos
+arrange <- ggarrange(g21, g22, 
+                     ncol = 2, nrow = 1)
+ggsave("output/g21-g22.png", arrange, width = 7.8, height = 2.1)
+
 
 ### Creacion de graficos #2.3 ###
 # create a dataset
@@ -323,12 +357,13 @@ datos_fusionados_p4 <- datos_fusionados_p4[order(datos_fusionados_p4$tipotranspo
 # Ggplot
 g23 <- ggplot(datos_fusionados_p4, 
               aes(fill=tipotransporte, y=cantidad_viajes, x=periodo)) + 
-              scale_fill_brewer(palette = "Pastel2") +
+              scale_fill_brewer(palette = "Set1") +
               geom_bar(position="dodge", stat="identity") + 
               labs(title = "Total de Viajes - Periodo X Tipo de Transporte",
                    x = "Periodo",
                    y = "Total Viajes",
-                   fill = "Tipo de Trasporte") 
+                   fill = "Tipo de Trasporte") +
+              theme_grey(base_size = 14)
 
 ### Creacion de graficos #2.4 ###
 # create a dataset
@@ -346,12 +381,13 @@ datos_fusionados_s4 <- datos_fusionados_s4[order(datos_fusionados_s4$tipotranspo
 # Ggplot
 g24 <- ggplot(datos_fusionados_s4, 
               aes(fill=tipotransporte, y=cantidad_viajes, x=dia)) + 
-              scale_fill_brewer(palette = "Pastel2") +
+              scale_fill_brewer(palette = "Set1") +
               geom_bar(position="dodge", stat="identity") + 
               labs(title = "Total Viajes - Dia X Tipo de Transporte",
                    x = "Dia de la Semana",
                    y = "Total de Viajes (en miles)",
-                   fill = "Tipo de Trasporte")
+                   fill = "Tipo de Trasporte") +
+              theme_grey(base_size = 14)
 
 ### Creacion de graficos #2.5 ###
 # Para ordenar
@@ -369,16 +405,17 @@ datos_fusionados_d2 <- datos_fusionados_d %>%
 g25 <- ggplot(datos_fusionados_d2, 
               aes(fill=periodo, y=cantidad_viajes, x=dia)) + 
               geom_bar(position="dodge", stat="identity") + 
-              scale_fill_brewer(palette = "Pastel2") +
+              scale_fill_brewer(palette = "Set1") +
               labs(title = "Total de Viajes - Dia de Semana X Periodo del Dia",
                    x = "Dia de la Semana",
                    y = "Total de Viajes",
-                   fill = "Periodo del Dia") 
+                   fill = "Periodo del Dia") +
+              theme_grey(base_size = 14)
 
 # Agrupando 3 ggplots
 arrange2 <- ggarrange(g23, g24, g25, 
           labels = c("X", "Y", "Z"),
-          ncol = 1, nrow = 3)
+          ncol = 1, nrow = 3, hjust = c(-94,-94,-103))
 ggsave("output/g23-g24-g25.png", arrange2, width = 6, height = 4)
 
 ### Creacion de graficos - Grupo 3 
@@ -391,7 +428,7 @@ transporte_pasajes <- datos_fusionados %>%
   ungroup()
 
 g31 <-  ggplot(transporte_pasajes, aes(x = fecha, y = total_monto)) +
-        geom_area(linetype = 3, fill="#69b3a2", alpha=0.4,
+        geom_area(linetype = 3, fill="#FF7F00", alpha=0.4,
             lwd = 1.1, color = "steelblue",
             alpha = 0.6,
             size = 0.6) + 
@@ -407,10 +444,24 @@ g31 <-  ggplot(transporte_pasajes, aes(x = fecha, y = total_monto)) +
             scale_x_date(date_breaks = "1 day", date_minor_breaks = "1 day",
                  date_labels = "%b %d") +
             guides(x = guide_axis(angle = 45)) +
-            theme_minimal()
+            theme_grey(base_size = 14)
 ggsave("output/g31.png", plot = g31)
   
 ### Creacion de graficos #3.2 - Viajes por Empresas###
+datos_fusionados_r$periodo <- factor(datos_fusionados_d$periodo, levels=c("Madrugada", "Mañana", "Mediamañana", "Siesta", "Tarde", "Noche"))
+
+
+  g32 <- ggplot(datos_fusionados_r, aes(x=reorder(EOT, - cantidad_viajes), y=cantidad_viajes, fill=cantidad_viajes)) + 
+        geom_bar(stat="identity") + 
+        labs(title = "Total de Viajes por Empresa",
+             x = "Empresas",
+             y = "Total de viajes",
+             fill = "Día") +
+        scale_y_continuous(labels = scales::comma) +
+        theme(axis.text.x=element_text(angle=45, hjust=1), legend.position = "none") + 
+        ggplot_theme
+
+
 par(mar=c(12,6,4,3))
 g32 <-  barplot(height=datos_fusionados_r$cantidad_viajes, 
           names=datos_fusionados_r$EOT, 
