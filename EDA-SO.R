@@ -424,18 +424,18 @@ ggsave("output/g23-g24-g25.png", arrange2, width = 6, height = 4)
 transporte_pasajes <- datos_fusionados %>%
   filter(tipoevento == 4, producto == "MO") %>%
   group_by(fecha) %>%
-  summarize(total_monto = sum(montoevento)) %>%
+  summarize(cantidad_viajes = n()) %>%
   ungroup()
 
-g31 <-  ggplot(transporte_pasajes, aes(x = fecha, y = total_monto)) +
+g31 <-  ggplot(transporte_pasajes, aes(x = fecha, y = cantidad_viajes)) +
         geom_area(linetype = 3, fill="#FF7F00", alpha=0.4,
             lwd = 1.1, color = "steelblue",
             alpha = 0.6,
             size = 0.6) + 
             geom_point(size=1) +
-            labs(title = "Total de Viajes por fecha",
-                 x = "Fecha", y = "Monto Total Facturado",
-                 fill = "Monto en Guaranies") +
+            labs(title = "Cantidad de Viajes por fecha",
+                 x = "Fecha", y = "Cantidad de Viajes",
+                 fill = "Cantidad") +
             geom_vline(xintercept = as.numeric(as.Date("2023-03-05")), linetype=2, color = "red") +
             geom_vline(xintercept = as.numeric(as.Date("2023-03-12")), linetype=2, color = "red") +
             geom_vline(xintercept = as.numeric(as.Date("2023-03-19")), linetype=2, color = "red") +
