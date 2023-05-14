@@ -31,17 +31,13 @@ devtools::install_github("kassambara/ggpubr")
 install.packages("ggpubr")
 library(ggpubr)
 
-library("googledrive")
-
 
 #################################
 #Prepare the data
 # Read the data from the RDS file
 
-# Para obtener el datasource descargar el archivo de
-# https://drive.google.com/file/d/1Nn6c2szg4ZcQTyWA9LC_ESHhdn5YU_pw/view?usp=sharing"
-# y guardarlo en data/202303.rds
-
+# Para obtener el datasource descomentar:
+# transporte <- readRDS(url("https://drive.google.com/file/d/1Nn6c2szg4ZcQTyWA9LC_ESHhdn5YU_pw/view?usp=sharing"))
 transporte <- readRDS("data/202303.rds")
 rutas <- read.csv("data/rutas.csv")
 
