@@ -1,3 +1,6 @@
+# Autores: Sebastian Ortiz y Santiago Yegros
+
+
 #Analisis Descriptivo - EDA
 
 
@@ -81,7 +84,6 @@ datos_fusionados <- inner_join(transporte, rutas, by = "idrutaestacion")
 
 
 #Hacemos un sumario del dataset para ver sus caracteristicas
-library(ISLR)
 st_options(lang = "es") #Translations
 summarytools::view(dfSummary(datos_fusionados), 
                    footnote = NA, 
@@ -106,7 +108,6 @@ datos_fusionados_t <- datos_fusionados %>%
   group_by(tipotransporte, EOT, ramal) %>%
   summarize(total = sum(montoevento), cantidad_viajes = n()) %>%
   ungroup()
-
 
 #Groupby por periodo:
 #0-4 Madrugada / 4-8 Mañana / 8-12 Mediamañana / 12-16 Siesta / 16-20 Tarde / 20-00 Noche
@@ -152,8 +153,6 @@ library(ggplot2)
 library(RColorBrewer)
 library(ggthemes)
 library(scales)
-coul <- brewer.pal(7, "Set2")
-coul2 <- brewer.pal(7, "Set3")
 
 ### Creacion de graficos - Grupo 1 - Por total de Ganancia ###
 
@@ -184,16 +183,6 @@ g11 <-  ggplot(datos_fusionados_p1, aes(x=periodo, y=total, fill=periodo)) +
              fill = "Periodo") +
         theme_grey(base_size = 18)
 
-# Barplot
-#par(mfrow = c(1:2))
-#g11 <- barplot(height=datos_fusionados_p1$total, 
-#        names=datos_fusionados_p1$periodo,
-#        xlab="Periodos", 
-#        ylab="Total (en millones de Gs)", 
-#        main="Total de Ganancia en Millones", 
-#        ylim=c(0,7500),
-#        col=coul )
-
 ### Creacion de graficos #1.2 ###
 datos_fusionados_s1 <- datos_fusionados_s %>% 
   select(-cantidad_viajes) %>%
@@ -218,7 +207,7 @@ g12 <-  ggplot(datos_fusionados_s1, aes(x=dia, y=total, fill=dia)) +
 # Agrupando 2 ggplots y guardamos
 arrange <- ggarrange(g11, g12, 
                      ncol = 2, nrow = 1)
-ggsave("output/g11-g12.png", arrange, width = 7.8, height = 3.1)
+ggsave("output/g11-g12.png", arrange, width = 8, height = 2)
 
 
 ### Creacion de graficos #1.3 ###
@@ -418,7 +407,7 @@ arrange2 <- ggarrange(g23, g24, g25,
           ncol = 1, nrow = 3, hjust = c(-94,-94,-103))
 ggsave("output/g23-g24-g25.png", arrange2, width = 6, height = 4)
 
-### Creacion de graficos - Grupo 3 
+### Creacion de graficos - Grupo 3 - Generales
 
 ### Creacion de graficos #3.1 - Viajes por Fecha###
 transporte_pasajes <- datos_fusionados %>%
@@ -448,10 +437,8 @@ g31 <-  ggplot(transporte_pasajes, aes(x = fecha, y = cantidad_viajes)) +
 ggsave("output/g31.png", plot = g31)
   
 ### Creacion de graficos #3.2 - Viajes por Empresas###
-datos_fusionados_r$periodo <- factor(datos_fusionados_d$periodo, levels=c("Madrugada", "Mañana", "Mediamañana", "Siesta", "Tarde", "Noche"))
 
-
-  g32 <- ggplot(datos_fusionados_r, aes(x=reorder(EOT, - cantidad_viajes), y=cantidad_viajes, fill=cantidad_viajes)) + 
+g32 <- ggplot(datos_fusionados_r, aes(x=reorder(EOT, - cantidad_viajes), y=cantidad_viajes, fill=cantidad_viajes)) + 
         geom_bar(stat="identity") + 
         labs(title = "Total de Viajes por Empresa",
              x = "Empresas",
@@ -462,16 +449,6 @@ datos_fusionados_r$periodo <- factor(datos_fusionados_d$periodo, levels=c("Madru
         ggplot_theme
 
 
-par(mar=c(12,6,4,3))
-g32 <-  barplot(height=datos_fusionados_r$cantidad_viajes, 
-          names=datos_fusionados_r$EOT, 
-          main="Total de Viajes por Empresa", 
-          ylim=c(0,1200000),
-          srt=45,
-          las=2, cex.names=0.7, cex.axis=0.7, 
-          col=brewer.pal(30, name="Spectral") ) + 
-          mtext('Empresas', 1, 10) + mtext('Total de Viajes', 2, 4)
-  
   
 ########################################
 # Cálculo de coeficiente de correlación:
