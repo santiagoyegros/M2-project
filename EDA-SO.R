@@ -639,15 +639,15 @@ transporte %$%        # note $ sign here
 # Si no se cumple este supuesto, una prueba alternativa es 
 # la prueba exacta de Fisher.
 transporte %$%        # note $ sign here
-  table(periodo.factor, tipotransporte.factor)
+  table(identidad.factor, tipotransporte.factor)
 
 transporte %$%        # note $ sign here
-  table(periodo.factor, tipotransporte.factor) %>% 
+  table(identidad.factor, tipotransporte.factor) %>% 
   chisq.test()
 
 # por la prueba exacta de Fisher
 transporte %$%        # note $ sign here
-  table(periodo.factor, tipotransporte.factor) %>% 
+  table(identidad.factor, tipotransporte.factor) %>% 
   fisher.test(simulate.p.value = TRUE)
 
 # Chi-cuadrado / Prueba exacta de Fisher usando finalfit ####
